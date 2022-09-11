@@ -13,35 +13,32 @@ namespace ServerCore {
         // 전송하는 것을 큐로 저장
         object _lock = new object();
         Queue<byte[]> _sendQueue = new Queue<byte[]>();
-        bool _pending = false;
         SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
+        SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
+        List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
 
         // 소켓을 인자로 받아 초기화 및 실행
         public void Start(Socket socket) {
             _socket = socket;
 
-            SocketAsyncEventArgs recvArgs = new SocketAsyncEventArgs();
-            recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
+            _recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
             // 버퍼 설정
-            recvArgs.SetBuffer(new byte[1024], 0, 1024);
+            _recvArgs.SetBuffer(new byte[1024], 0, 1024);
 
             _sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnSendCompleted);
 
-            RegisterRecv(recvArgs);
+            RegisterRecv();
         }
 
         // 보내기
         public void Send(byte[] sendBuff) {
             lock (_lock) {
                 _sendQueue.Enqueue(sendBuff);
-                if (_pending == false) {
+                // _pendingList가 비었다면 버퍼를 Register
+                if (_pendingList.Count == 0) {
                     RegisterSend();
                 }
             }
-            
-            //SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
-            //// 버퍼 설정
-            //_sendArgs.SetBuffer(sendBuff, 0, sendBuff.Length);
         }
 
         public void Disconnect() {
@@ -59,9 +56,16 @@ namespace ServerCore {
         #region 네트워크 통신
         // 보내는 시점이 정해져 있지 않음
         private void RegisterSend() {
-            _pending = true;
-            byte[] buff = _sendQueue.Dequeue();
-            _sendArgs.SetBuffer(buff, 0, buff.Length);
+            // RegisterSend 내부로 들어왔을 때는 _pendingList.Count가 0인 상태이다.
+            while (_sendQueue.Count > 0) {
+                byte[] buff = _sendQueue.Dequeue();
+                // 실제 보낼 데이터가 있는 버퍼
+                // ArraySegment: 특정 배열 일부(구조체)
+                // C++과 달리 포인터가 없기에 오프셋을 전달한다.
+                _pendingList.Add(new ArraySegment<byte>(buff, 0, buff.Length));
+            }
+
+            _sendArgs.BufferList = _pendingList;
 
             bool pending = _socket.SendAsync(_sendArgs);
             if (pending == false) {
@@ -74,13 +78,15 @@ namespace ServerCore {
             lock (_lock) {
                 if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success) {
                     try {
-                        // 만약 처리중 큐에 다른게 생겼다면 처리한다.
+                        _sendArgs.BufferList = null;
+                        _pendingList.Clear();
+
+                        Console.WriteLine($"Transferred bytes: {_sendArgs.BytesTransferred}");
+
+                        // 만약 처리중 큐에 다른게 생겼다면 또 처리한다.
                         if (_sendQueue.Count > 0) {
                             RegisterSend();
-                        }
-                        else {
-                            // 아니라면 pending을 false로 한다.
-                            _pending = false;
+                            // 만약 RegisterSend를 했다면 _pendingList를 Clear했다는 뜻
                         }
                     }
                     catch (Exception e) {
@@ -95,10 +101,10 @@ namespace ServerCore {
 
 
         // 리스너와 같은 방식
-        private void RegisterRecv(SocketAsyncEventArgs args) {
-            bool pending = _socket.ReceiveAsync(args);
+        private void RegisterRecv() {
+            bool pending = _socket.ReceiveAsync(_recvArgs);
             if (pending == false) {
-                OnRecvCompleted(null, args);
+                OnRecvCompleted(null, _recvArgs);
             }
         }
 
@@ -111,7 +117,7 @@ namespace ServerCore {
                     string recvData = Encoding.UTF8.GetString(args.Buffer, args.Offset, args.BytesTransferred);
                     Console.WriteLine($"[From client] {recvData}");
 
-                    RegisterRecv(args);
+                    RegisterRecv();
                 }
                 catch (Exception e) {
                     Console.WriteLine($"OnRecvCompleted failed: {e}");
