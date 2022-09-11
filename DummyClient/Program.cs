@@ -13,30 +13,35 @@ namespace DummyClient {
             // 최종 주소를 만들고 클라이언트가 접속할 포트를 지정한다.
             IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
 
-            // 소켓 생성
-            Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            while (true) {
+                // 소켓 생성
+                Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-            try {
-                // 소켓 연결 시도
-                socket.Connect(endPoint);
-                Console.WriteLine($"Connected to: {socket.RemoteEndPoint.ToString()}");
+                try {
+                    // 소켓 연결 시도
+                    socket.Connect(endPoint);
+                    Console.WriteLine($"Connected to: {socket.RemoteEndPoint.ToString()}");
 
-                // 보내기
-                byte[] sendBuff = Encoding.UTF8.GetBytes("Hello world");
-                int sendBytes = socket.Send(sendBuff);
+                    // 보내기
+                    byte[] sendBuff = Encoding.UTF8.GetBytes("Hello world");
+                    int sendBytes = socket.Send(sendBuff);
 
-                // 받기
-                byte[] recvBuff = new byte[1024];
-                int recvBytes = socket.Receive(recvBuff);
-                string recvData = Encoding.UTF8.GetString(recvBuff, 0, recvBytes);
-                Console.WriteLine($"[From server] {recvData}");
+                    // 받기
+                    byte[] recvBuff = new byte[1024];
+                    int recvBytes = socket.Receive(recvBuff);
+                    string recvData = Encoding.UTF8.GetString(recvBuff, 0, recvBytes);
+                    Console.WriteLine($"[From server] {recvData}");
 
-                // 연결 끊기
-                socket.Shutdown(SocketShutdown.Both);
-                socket.Close();
-            }
-            catch (Exception e) {
-                Console.WriteLine(e.ToString());
+                    // 연결 끊기
+                    socket.Shutdown(SocketShutdown.Both);
+                    socket.Close();
+                }
+                catch (Exception e) {
+                    Console.WriteLine(e.ToString());
+                }
+
+                // 0.1초마다 연결 시도
+                Thread.Sleep(100);
             }
         }
     }
