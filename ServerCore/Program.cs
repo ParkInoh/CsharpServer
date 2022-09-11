@@ -7,20 +7,15 @@ namespace ServerCore {
         static Listener _listener = new Listener();
         static void OnAcceptHandler(Socket clientSocket) {
             try {
-                // 받기
-                byte[] recvBuff = new byte[1024];
-                int recvBytes = clientSocket.Receive(recvBuff);
-                string recvData = Encoding.UTF8.GetString(recvBuff, 0, recvBytes);
-                Console.WriteLine($"[From client] {recvData}");
+                Session session = new Session();
+                session.Start(clientSocket);
 
-                // 보내기
                 byte[] sendBuff = Encoding.UTF8.GetBytes("Welcome to Server");
-                clientSocket.Send(sendBuff);
+                session.Send(sendBuff);
 
-                // 연결 중단
-                // 연결이 중단됨을 미리 알림
-                clientSocket.Shutdown(SocketShutdown.Both);
-                clientSocket.Close();
+                Thread.Sleep(1000);
+
+                session.Disconnect();
             }
             catch (Exception e) {
                 Console.WriteLine(e.ToString());

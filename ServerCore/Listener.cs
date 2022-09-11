@@ -44,6 +44,7 @@ namespace ServerCore {
         }
 
         // 소켓이 연결되었다면 동작
+        // 콜백 함수는 별도의 쓰레드에서 실행된다.
         private void OnAcceptCompleted(object sender, SocketAsyncEventArgs args) {
             if (args.SocketError == SocketError.Success) {
                 // 소켓이 제대로 연결되었다면 동작
