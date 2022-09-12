@@ -3,10 +3,10 @@ using System.Net.Sockets;
 
 namespace ServerCore {
     public class Listener {
-        Socket _listenSocket;
+        private Socket _listenSocket;
         // Session이 abstract이기에 어떤 Session이 필요한지 알 수 없다.
         // 그래서 Func로 어떤 Session을 만들 것인지를 인자로 받는다.
-        Func<Session> _sessionFactory;
+        private Func<Session> _sessionFactory;
 
         public void Init(IPEndPoint endPoint, Func<Session> sessionFactory) {
             // 소켓 생성

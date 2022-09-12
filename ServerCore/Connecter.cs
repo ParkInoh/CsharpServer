@@ -8,7 +8,7 @@ namespace ServerCore {
     // 한쪽은 listen, 다른 쪽은 connect해야 한다.
 
     public class Connecter {
-        Func<Session> _sessionFactory;
+        private Func<Session> _sessionFactory;
 
         public void Connect(IPEndPoint endPoint, Func<Session> sessionFactory) {
             // 소켓 생성
