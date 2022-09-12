@@ -10,7 +10,7 @@ namespace ServerCore {
 
         // 전송하는 것을 큐로 저장
         object _lock = new object();
-        Queue<byte[]> _sendQueue = new Queue<byte[]>();
+        Queue<ArraySegment<byte>> _sendQueue = new Queue<ArraySegment<byte>>();
         SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
         SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
         List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
@@ -32,7 +32,7 @@ namespace ServerCore {
         }
 
         // 보내기
-        public void Send(byte[] sendBuff) {
+        public void Send(ArraySegment<byte> sendBuff) {
             lock (_lock) {
                 _sendQueue.Enqueue(sendBuff);
                 // _pendingList가 비었다면 버퍼를 Register
@@ -60,11 +60,11 @@ namespace ServerCore {
         private void RegisterSend() {
             // RegisterSend 내부로 들어왔을 때는 _pendingList.Count가 0인 상태이다.
             while (_sendQueue.Count > 0) {
-                byte[] buff = _sendQueue.Dequeue();
+                ArraySegment<byte> buff = _sendQueue.Dequeue();
                 // 실제 보낼 데이터가 있는 버퍼
                 // ArraySegment: 특정 배열 일부(구조체)
                 // C++과 달리 포인터가 없기에 오프셋을 전달한다.
-                _pendingList.Add(new ArraySegment<byte>(buff, 0, buff.Length));
+                _pendingList.Add(buff);
             }
 
             _sendArgs.BufferList = _pendingList;

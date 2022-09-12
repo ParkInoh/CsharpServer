@@ -3,11 +3,19 @@ using System.Net;
 using System.Text;
 
 namespace Server {
+
     class GameSession : Session {
         public override void OnConnected(EndPoint endPoint) {
             Console.WriteLine($"OnConnected: {endPoint}");
 
-            byte[] sendBuff = Encoding.UTF8.GetBytes("Welcome to Server");
+            // 버퍼 헬퍼를 사용하도록 변경
+            ArraySegment<byte> openSegment = SendBufferHelper.Open(4096);
+            byte[] buffer = BitConverter.GetBytes(1234);
+            byte[] buffer2 = BitConverter.GetBytes(4321);
+            Array.Copy(buffer, 0, openSegment.Array, openSegment.Offset, buffer.Length);
+            Array.Copy(buffer2, 0, openSegment.Array, openSegment.Offset + buffer.Length, buffer2.Length);
+            ArraySegment<byte> sendBuff = SendBufferHelper.Close(buffer.Length + buffer2.Length);
+
             Send(sendBuff);
 
             Thread.Sleep(1000);
