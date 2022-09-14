@@ -2,6 +2,47 @@
 using System.Net.Sockets;
 
 namespace ServerCore {
+    public abstract class PacketSession : Session {
+        public static readonly int HeaderSize = 2;
+
+        // sealed: 다른 클래스가 오버라이드를 시도하면 에러가 남
+        // [size][packetId][...][size][packetId][...]
+        // 패킷의 size를 패킷 내에 넣어두면 나중에 확인하기 편함
+        public sealed override int OnRecv(ArraySegment<byte> buffer) {
+            int processLen = 0;
+
+            while (true) {
+                // 예시 패킷은 ushort 2개로 이루어짐
+                // 그래서 최소 2바이트 이상이어야 함
+                if (buffer.Count < HeaderSize) {
+                    break;
+                }
+
+                // 패킷이 완전히 도착했는지
+                // 첫 인자는 패킷의 size로 정했음
+                ushort dataSize = BitConverter.ToUInt16(buffer.Array, buffer.Offset);
+                // 작다면 일부만 도착한 것
+                if (buffer.Count < dataSize) {
+                    break;
+                }
+
+                // 여기까지 문제가 없다면 패킷 조립 가능
+                // 해당 패킷 유효 범위 지정해서 넘김
+                // ArraySegment는 class가 아니라 struct이기에 new를 붙인다고 해도
+                // heap에 할당되는 것이 아니라 stack에 복사될 뿐이기에 부담이 없다.
+                OnRecvPacket(new ArraySegment<byte>(buffer.Array, buffer.Offset, dataSize));
+
+                processLen += dataSize;
+                // 처리한 부분을 뺀 다음(남은) 부분
+                buffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + dataSize, buffer.Count - dataSize);
+            }
+
+            return processLen;
+        }
+
+        public abstract void OnRecvPacket(ArraySegment<byte> buffer);
+    }
+
     public abstract class Session {
         private Socket _socket;
         private int disconnected = 0;

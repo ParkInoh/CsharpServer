@@ -4,13 +4,27 @@ using System.Net.Sockets;
 using System.Text;
 
 namespace DummyClient {
+    class Packet {
+        public ushort size;
+        public ushort packetId;
+    }
+
     class GameSession : Session {
         public override void OnConnected(EndPoint endPoint) {
             Console.WriteLine($"OnConnected: {endPoint}");
 
             // 보내기
             for (int i = 0; i < 5; i++) {
-                byte[] sendBuff = Encoding.UTF8.GetBytes($"Hello world: {i}");
+                Packet packet = new Packet() { size = 4, packetId = 6 };
+
+                // 버퍼 헬퍼를 사용하도록 변경
+                ArraySegment<byte> openSegment = SendBufferHelper.Open(4096);
+                byte[] buffer = BitConverter.GetBytes(packet.size);
+                byte[] buffer2 = BitConverter.GetBytes(packet.packetId);
+                Array.Copy(buffer, 0, openSegment.Array, openSegment.Offset, buffer.Length);
+                Array.Copy(buffer2, 0, openSegment.Array, openSegment.Offset + buffer.Length, buffer2.Length);
+                ArraySegment<byte> sendBuff = SendBufferHelper.Close(packet.size);
+
                 Send(sendBuff);
             }
         }
