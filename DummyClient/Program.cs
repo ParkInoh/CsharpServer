@@ -1,48 +1,8 @@
 ﻿using ServerCore;
 using System.Net;
-using System.Net.Sockets;
-using System.Text;
 
 namespace DummyClient {
-    class Packet {
-        public ushort size;
-        public ushort packetId;
-    }
-
-    class GameSession : Session {
-        public override void OnConnected(EndPoint endPoint) {
-            Console.WriteLine($"OnConnected: {endPoint}");
-
-            // 보내기
-            for (int i = 0; i < 5; i++) {
-                Packet packet = new Packet() { size = 4, packetId = 6 };
-
-                // 버퍼 헬퍼를 사용하도록 변경
-                ArraySegment<byte> openSegment = SendBufferHelper.Open(4096);
-                byte[] buffer = BitConverter.GetBytes(packet.size);
-                byte[] buffer2 = BitConverter.GetBytes(packet.packetId);
-                Array.Copy(buffer, 0, openSegment.Array, openSegment.Offset, buffer.Length);
-                Array.Copy(buffer2, 0, openSegment.Array, openSegment.Offset + buffer.Length, buffer2.Length);
-                ArraySegment<byte> sendBuff = SendBufferHelper.Close(packet.size);
-
-                Send(sendBuff);
-            }
-        }
-
-        public override void OnDisconnected(EndPoint endPoint) {
-            Console.WriteLine($"OnDisconnected: {endPoint}");
-        }
-
-        public override int OnRecv(ArraySegment<byte> buffer) {
-            string recvData = Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count);
-            Console.WriteLine($"[From server] {recvData}");
-            return buffer.Count;
-        }
-
-        public override void OnSend(int numOfBytes) {
-            Console.WriteLine($"Transferred bytes: {numOfBytes}");
-        }
-    }
+    
 
     internal class Program {
         static void Main(string[] args) {
@@ -56,7 +16,7 @@ namespace DummyClient {
 
             // 커넥터를 사용하도록 연결 변경
             Connecter connecter = new Connecter();
-            connecter.Connect(endPoint, () => { return new GameSession(); });
+            connecter.Connect(endPoint, () => { return new ServerSession(); });
 
             while (true) {
                 //try {
