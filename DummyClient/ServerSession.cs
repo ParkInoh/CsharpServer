@@ -21,6 +21,40 @@ namespace DummyClient {
         public long playerId;
         public string name;
 
+        // 아래와 같이 구조체 형식을 보내려면?
+        // string과 비슷하게 List의 원소 갯수를 보내고, 원소들을 보낸다.
+        public struct SkillInfo {
+            public int id;
+            public short level;
+            public float duration;
+
+            // Write와 마찬가지
+            public void Read(ReadOnlySpan<byte> span, ref ushort count) {
+                this.id = BitConverter.ToInt32(span.Slice(count, span.Length - count));
+                count += sizeof(int);
+                this.level = BitConverter.ToInt16(span.Slice(count, span.Length - count));
+                count += sizeof(short);
+                this.duration = BitConverter.ToSingle(span.Slice(count, span.Length - count));
+                count += sizeof(float);
+            }
+
+            // 외부에서 사용하던 count를 참조하고 변경하도록 함
+            // span에 값을 추가하고 정상적인지 return
+            public bool Write(Span<byte> span, ref ushort count) {
+                bool success = true; 
+                success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), this.id);
+                count += sizeof(int);
+                success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), this.level);
+                count += sizeof(short);
+                success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), this.duration);
+                count += sizeof(float);
+
+                return success;
+            }
+        }
+
+        public List<SkillInfo> skills = new List<SkillInfo>();
+
         public PlayerInfoReq () {
             packetId = (ushort)PacketID.PlayerInfoReq;
         }
@@ -44,6 +78,18 @@ namespace DummyClient {
             count += sizeof(ushort);
             this.name = Encoding.Unicode.GetString(span.Slice(count, nameLen));
             count += nameLen;
+
+            // skill 추출
+            // 기존 정보 초기화
+            skills.Clear();
+            ushort skillLength = BitConverter.ToUInt16(span.Slice(count, span.Length - count));
+            count += sizeof(ushort);
+
+            for (int i = 0; i < skillLength; i++) {
+                SkillInfo skill = new SkillInfo();
+                skill.Read(span, ref count);
+                skills.Add(skill);
+            }
         }
 
         public override ArraySegment<byte> Write() {
@@ -79,6 +125,14 @@ namespace DummyClient {
             count += sizeof(ushort);
             count += nameLen;
 
+            // skill list
+            success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), (ushort)skills.Count);
+            count += sizeof(ushort);
+
+            foreach (SkillInfo skill in skills) {
+                // count 값을 참조하고 변경하도록 함
+                success &= skill.Write(span, ref count);
+            }
             
             // 결과 count 값 적용
             success &= BitConverter.TryWriteBytes(span, count);
@@ -107,6 +161,9 @@ namespace DummyClient {
             // 직렬화: 메모리 상의 인스턴스를 버퍼에 넣는 작업
 
             PlayerInfoReq packet = new PlayerInfoReq() { playerId = 1001, name = "abcd" };
+            packet.skills.Add(new PlayerInfoReq.SkillInfo() { id = 101, level = 3, duration = 3.0f });
+            packet.skills.Add(new PlayerInfoReq.SkillInfo() { id = 102, level = 2, duration = 4.0f });
+            packet.skills.Add(new PlayerInfoReq.SkillInfo() { id = 103, level = 6, duration = 7.0f });
 
             // 보내기
             // Write 함수로 처리됨
