@@ -18,7 +18,6 @@ namespace DummyClient {
 
     // 예제 패킷
     class PlayerInfoReq : Packet {
-        // 가변적인 크기의 패킷을 적용한다(string 등).
         public long playerId;
         public string name;
 
@@ -79,6 +78,7 @@ namespace DummyClient {
             success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), nameLen);
             count += sizeof(ushort);
             count += nameLen;
+
             
             // 결과 count 값 적용
             success &= BitConverter.TryWriteBytes(span, count);

@@ -90,7 +90,6 @@ namespace Server {
             return SendBufferHelper.Close(count);  // 12 = 2 + 2 + 8
         }
     }
-}
 
     // 패킷의ID 를 구분할 수 있어야 함
     public enum PacketID {
