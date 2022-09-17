@@ -1,6 +1,25 @@
 ﻿namespace PacketGenerator {
     internal class PacketFormat {
 
+        // 파일 전체에 대한 포맷
+        // {0}: 패킷 이름, 번호 목록
+        // {1}: 패킷 목록
+        public static string fileFormat =
+@"using ServerCore;
+using System.Net;
+using System.Text;
+
+public enum PacketID {{
+    {0}
+}}
+
+{1}
+";
+        // {0}: 패킷 이름
+        // {1}: 패킷 번호
+        public static string packetEnumFormat =
+@"{0} = {1},";
+
         // 바뀌는 부분을 {}로 감싸 정한다.
         // 일반 { 는 {{ 로 하나씩 더 붙여줘야 한다.
         // {0}: 패킷 이름
@@ -49,13 +68,13 @@
         public static string memberFormat =
 @"public {0} {1};";
 
-        // {0}: 리스트명 대문자(struct)
+        // {0}: 리스트명 대문자(class)
         // {1}: 리스트명 소문자(instance)
         // {2}: 멤버 변수들
         // {3}: 멤버 변수 Read
         // {4}: 멤버 변수 Write
         public static string memberListFormat =
-@"public struct {0} {{
+@"public class {0} {{
     {2}
 
     public void Read(ReadOnlySpan<byte> span, ref ushort count) {{
@@ -77,6 +96,12 @@ public List<{0}> {1}s = new List<{0}>();";
         public static string readFormat =
 @"this.{0} = BitConverter.{1}(span.Slice(count, span.Length - count));
 count += sizeof({2});";
+
+        // {0}: 변수명
+        // {1}: 변수 타입
+        public static string readByteFormat =
+@"this.{0} = ({1})seg.Array[seg.Offset + count];
+count += sizeof({1});";
 
         // {0}: 변수명
         public static string readStringFormat =
@@ -102,6 +127,12 @@ for (int i = 0; i < {1}Length; i++) {{
         // {1}: 변수 타입
         public static string writeFormat =
 @"success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), this.{0});
+count += sizeof({1});";
+
+        // {0}: 변수명
+        // {1}: 변수 타입
+        public static string writeByteFormat =
+@"seg.Array[seg.Offset + count] = (byte)this.{0};
 count += sizeof({1});";
 
         // {0}: 변수명

@@ -1,16 +1,39 @@
 ﻿using ServerCore;
-using System;
 using System.Net;
 using System.Text;
 
 namespace DummyClient {
+    public enum PacketID {
+        PlayerInfoReq = 1,
+        Test = 2,
+
+    }
+
     class PlayerInfoReq {
+        public byte testByte;
         public long playerId;
         public string name;
-        public struct Skill {
+        public class Skill {
             public int id;
             public short level;
             public float duration;
+            public class Attribute {
+                public int att;
+
+                public void Read(ReadOnlySpan<byte> span, ref ushort count) {
+                    this.att = BitConverter.ToInt32(span.Slice(count, span.Length - count));
+                    count += sizeof(int);
+                }
+
+                public bool Write(Span<byte> span, ref ushort count) {
+                    bool success = true;
+                    success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), this.att);
+                    count += sizeof(int);
+                    return success;
+                }
+            }
+
+            public List<Attribute> attributes = new List<Attribute>();
 
             public void Read(ReadOnlySpan<byte> span, ref ushort count) {
                 this.id = BitConverter.ToInt32(span.Slice(count, span.Length - count));
@@ -19,6 +42,15 @@ namespace DummyClient {
                 count += sizeof(short);
                 this.duration = BitConverter.ToSingle(span.Slice(count, span.Length - count));
                 count += sizeof(float);
+                this.attributes.Clear();
+                ushort attributeLength = BitConverter.ToUInt16(span.Slice(count, span.Length - count));
+                count += sizeof(ushort);
+
+                for (int i = 0; i < attributeLength; i++) {
+                    Attribute attribute = new Attribute();
+                    attribute.Read(span, ref count);
+                    attributes.Add(attribute);
+                }
             }
 
             public bool Write(Span<byte> span, ref ushort count) {
@@ -29,6 +61,12 @@ namespace DummyClient {
                 count += sizeof(short);
                 success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), this.duration);
                 count += sizeof(float);
+                success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), (ushort)this.attributes.Count);
+                count += sizeof(ushort);
+
+                foreach (Attribute attribute in this.attributes) {
+                    success &= attribute.Write(span, ref count);
+                }
                 return success;
             }
         }
@@ -42,6 +80,8 @@ namespace DummyClient {
             count += sizeof(ushort);
             count += sizeof(ushort);
 
+            this.testByte = (byte)seg.Array[seg.Offset + count];
+            count += sizeof(byte);
             this.playerId = BitConverter.ToInt64(span.Slice(count, span.Length - count));
             count += sizeof(long);
             ushort nameLen = BitConverter.ToUInt16(span.Slice(count, span.Length - count));
@@ -69,6 +109,8 @@ namespace DummyClient {
             success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), (ushort)PacketID.PlayerInfoReq);
             count += sizeof(ushort);
 
+            seg.Array[seg.Offset + count] = (byte)this.testByte;
+            count += sizeof(byte);
             success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), this.playerId);
             count += sizeof(long);
             ushort nameLen = (ushort)Encoding.Unicode.GetBytes(this.name, 0, this.name.Length, seg.Array, seg.Offset + count + sizeof(ushort));
@@ -92,14 +134,6 @@ namespace DummyClient {
         }
     }
 
-    // 패킷의ID 를 구분할 수 있어야 함
-    public enum PacketID {
-        PlayerInfoReq = 1,
-        PlayerInfoOk = 2,
-    }
-    // 위 정보들은 서버도 알고 있어야 한다.
-    // 추후에 공통된 곳에 배치할 예정
-
     class ServerSession : Session {
         public override void OnConnected(EndPoint endPoint) {
             Console.WriteLine($"OnConnected: {endPoint}");
@@ -107,7 +141,11 @@ namespace DummyClient {
             // 직렬화: 메모리 상의 인스턴스를 버퍼에 넣는 작업
 
             PlayerInfoReq packet = new PlayerInfoReq() { playerId = 1001, name = "abcd" };
-            packet.skills.Add(new PlayerInfoReq.Skill() { id = 101, level = 3, duration = 3.0f });
+
+            var skill = new PlayerInfoReq.Skill() { id = 101, level = 3, duration = 3.0f };
+            skill.attributes.Add(new PlayerInfoReq.Skill.Attribute() { att = 72 });
+            packet.skills.Add(skill);
+
             packet.skills.Add(new PlayerInfoReq.Skill() { id = 102, level = 2, duration = 4.0f });
             packet.skills.Add(new PlayerInfoReq.Skill() { id = 103, level = 6, duration = 7.0f });
 
