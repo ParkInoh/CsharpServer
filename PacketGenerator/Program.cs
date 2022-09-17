@@ -10,14 +10,21 @@ namespace PacketGenerator {
         static string packetEnums;
 
         static void Main(string[] args) {
+            string pdlPath = "../../PDL.xml";
+
             // XmlReader의 옵션 설정
             XmlReaderSettings settings = new XmlReaderSettings() {
                 IgnoreComments = true,
                 IgnoreWhitespace = true,
             };
 
+            // 실행 시에 args가 존재하면 pdlPath로 간주
+            if (args.Length >= 1) {
+                pdlPath = args[0];
+            }
+
             // using으로 하면 블록이 끝날때 알아서 Dispose를 호출
-            using (XmlReader reader = XmlReader.Create("PDL.xml", settings)) {
+            using (XmlReader reader = XmlReader.Create(pdlPath, settings)) {
                 // 헤더를 건너뛰고 컨텐츠로 이동
                 reader.MoveToContent();
 
