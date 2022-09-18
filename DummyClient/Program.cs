@@ -2,8 +2,6 @@
 using System.Net;
 
 namespace DummyClient {
-    
-
     internal class Program {
         static void Main(string[] args) {
             // DNS는 도메인으로부터 IP를 찾는다.
@@ -15,19 +13,17 @@ namespace DummyClient {
             IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
 
             // 커넥터를 사용하도록 연결 변경
-            Connecter connecter = new Connecter();
-            connecter.Connect(endPoint, () => { return new ServerSession(); });
+            Connecter connecter = new();
+            connecter.Connect(endPoint, () => { return SessionManager.Instance.Generate(); }, 10);
 
             while (true) {
-                //try {
-                    
-                //}
-                //catch (Exception e) {
-                //    Console.WriteLine(e.ToString());
-                //}
-
-                // 0.1초마다 연결 시도
-                Thread.Sleep(100);
+                try {
+                    SessionManager.Instance.SendForEach();
+                }
+                catch (Exception e) {
+                    Console.WriteLine(e.ToString());
+                }
+                Thread.Sleep(250);
             }
         }
     }

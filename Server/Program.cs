@@ -5,19 +5,17 @@ namespace Server {
     
 
     internal class Program {
-        static Listener _listener = new Listener();
+        static Listener _listener = new();
+        public static GameRoom Room = new();
 
         static void Main(string[] args) {
-            // 여기는 싱글쓰레드라 문제없이 동작
-            PacketManager.Instance.Register();
-
             string host = Dns.GetHostName();
             IPHostEntry ipHost = Dns.GetHostEntry(host);
             IPAddress ipAddr = ipHost.AddressList[0];
             IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
 
-            // 리스너 내부 동작에 의해 반복
-            _listener.Init(endPoint, () => { return new ClientSession(); });
+            // 세션매니저가 관리하도록 변경
+            _listener.Init(endPoint, () => { return SessionManager.Instance.Generate(); });
             Console.WriteLine("listening..");
 
             while (true) {
