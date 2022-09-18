@@ -3,11 +3,13 @@
 namespace PacketGenerator {
     internal class Program {
         // 실시간으로 관리되는 패킷 문자열
-        static string genPackets;
-        
         // 패킷 처리 갯수 기억
+        static string genPackets;
         static ushort packetId;
         static string packetEnums;
+
+        static string clientRegister;
+        static string serverRegister;
 
         static void Main(string[] args) {
             string pdlPath = "../../PDL.xml";
@@ -42,9 +44,15 @@ namespace PacketGenerator {
 
                 // {0}: 패킷 이름, 번호 목록
                 // {1}: 패킷 목록
-                string fileText = string.Format(PacketFormat.fileFormat, packetEnums, genPackets);
                 // 자동 파싱한 결과를 파일로 씀
+                string fileText = string.Format(PacketFormat.fileFormat, packetEnums, genPackets);
                 File.WriteAllText("GenPackets.cs", fileText);
+
+                // {0}: 패킷 등록 / 클라이언트, 서버 분리
+                string clientManagerText = string.Format(PacketFormat.manangerFormat, clientRegister);
+                File.WriteAllText("ClientPacketManager.cs", clientManagerText);
+                string serverManagerText = string.Format(PacketFormat.manangerFormat, serverRegister);
+                File.WriteAllText("ServerPacketManager.cs", serverManagerText);
             }
         }
 
@@ -78,6 +86,17 @@ namespace PacketGenerator {
             // {1}: 패킷 번호
             packetEnums += string.Format(PacketFormat.packetEnumFormat, packetName, ++packetId) 
                 + Environment.NewLine + "\t";
+
+            // 서버 -> 클라이언트 패킷
+            if (packetName.StartsWith("S_") || packetName.StartsWith("s_")) {
+                clientRegister += string.Format(PacketFormat.managerRegisterFormat, packetName)
+                    + Environment.NewLine;
+            }
+            // 클라이언트 -> 서버 패킷
+            else {
+                serverRegister += string.Format(PacketFormat.managerRegisterFormat, packetName)
+                    + Environment.NewLine;
+            }
         }
 
         // {1}: 멤버 변수

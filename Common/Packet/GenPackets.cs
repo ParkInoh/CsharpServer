@@ -3,8 +3,8 @@ using System.Net;
 using System.Text;
 
 public enum PacketID {
-    PlayerInfoReq = 1,
-	Test = 2,
+    C_PlayerInfoReq = 1,
+	S_Test = 2,
 	
 }
 
@@ -14,7 +14,7 @@ interface IPacket {
 	ArraySegment<byte> Write();
 }
 
-class PlayerInfoReq : IPacket {
+class C_PlayerInfoReq : IPacket {
     public byte testByte;
 	public long playerId;
 	public string name;
@@ -79,7 +79,7 @@ class PlayerInfoReq : IPacket {
 	public List<Skill> skills = new List<Skill>();
 
     public ushort Protocol {
-		get { return (ushort)PacketID.PlayerInfoReq; }
+		get { return (ushort)PacketID.C_PlayerInfoReq; }
 	}
 
     public void Read(ArraySegment<byte> seg) {
@@ -115,7 +115,7 @@ class PlayerInfoReq : IPacket {
 
         Span<byte> span = new Span<byte>(seg.Array, seg.Offset, seg.Count);
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), (ushort)PacketID.PlayerInfoReq);
+        success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), (ushort)PacketID.C_PlayerInfoReq);
         count += sizeof(ushort);
 
         seg.Array[seg.Offset + count] = (byte)this.testByte;
@@ -142,11 +142,11 @@ class PlayerInfoReq : IPacket {
         return SendBufferHelper.Close(count);
     }
 }
-class Test : IPacket {
+class S_Test : IPacket {
     public int testInt;
 
     public ushort Protocol {
-		get { return (ushort)PacketID.Test; }
+		get { return (ushort)PacketID.S_Test; }
 	}
 
     public void Read(ArraySegment<byte> seg) {
@@ -167,7 +167,7 @@ class Test : IPacket {
 
         Span<byte> span = new Span<byte>(seg.Array, seg.Offset, seg.Count);
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), (ushort)PacketID.Test);
+        success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), (ushort)PacketID.S_Test);
         count += sizeof(ushort);
 
         success &= BitConverter.TryWriteBytes(span.Slice(count, span.Length - count), this.testInt);

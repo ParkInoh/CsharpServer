@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- C_: 클라이언트 -> 서버 / S_: 서버 -> 클라이언트 -->
 <PDL>
-	<packet name="PlayerInfoReq">
+	<packet name="C_PlayerInfoReq">
 		<byte name="testByte"/>
 		<long name="playerId"/>
 		<string name="name"/>
@@ -13,7 +14,7 @@
 			</list>
 		</list>
 	</packet>
-	<packet name="Test">
+	<packet name="S_Test">
 		<int name="testInt"/>
 	</packet>
 </PDL>

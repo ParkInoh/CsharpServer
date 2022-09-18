@@ -1,5 +1,60 @@
 ﻿namespace PacketGenerator {
     internal class PacketFormat {
+        // {0}: 패킷 등록
+        public static string manangerFormat =
+@"using ServerCore;
+
+    class PacketManager {{
+    #region Singleton
+    static PacketManager _instance;
+    public static PacketManager Instance {{
+        get {{
+            if (_instance == null) {{
+                _instance = new PacketManager();
+            }}
+            return _instance;
+        }}
+    }}
+    #endregion
+
+    // protocolId, 작업(Action)
+    Dictionary<ushort, Action<PacketSession, ArraySegment<byte>>> _onRecv = new();
+    Dictionary<ushort, Action<PacketSession, IPacket>> _handler = new();
+
+    public void Register() {{
+{0}
+    }}
+
+    public void OnRecvPacket(PacketSession session, ArraySegment<byte> buffer) {{
+        ushort count = 0;
+
+        ushort size = BitConverter.ToUInt16(buffer.Array, buffer.Offset);
+        count += 2;
+        ushort packetId = BitConverter.ToUInt16(buffer.Array, buffer.Offset + count);
+        count += 2;
+
+        Action<PacketSession, ArraySegment<byte>> action = null;
+        if (_onRecv.TryGetValue(packetId, out action)) {{
+            action.Invoke(session, buffer);
+        }}
+    }}
+
+    void MakePacket<T>(PacketSession session, ArraySegment<byte> buffer) where T : IPacket, new() {{
+        T packet = new T();
+        packet.Read(buffer);
+
+        Action<PacketSession, IPacket> action = null;
+        if (_handler.TryGetValue(packet.Protocol, out action)) {{
+            action.Invoke(session, packet);
+        }}
+    }}
+}}
+";
+
+        // {0}: 패킷 이름
+        public static string managerRegisterFormat =
+@"        _onRecv.Add((ushort)PacketID.{0}, MakePacket<{0}>);
+        _handler.Add((ushort)PacketID.{0}, PacketHandler.{0}Handler);";
 
         // 파일 전체에 대한 포맷
         // {0}: 패킷 이름, 번호 목록

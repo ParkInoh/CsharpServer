@@ -1,6 +1,5 @@
 ﻿using ServerCore;
 using System.Net;
-using System.Text;
 
 namespace Server {
     class ClientSession : PacketSession {
