@@ -44,8 +44,8 @@ namespace ServerCore {
     }
 
     public abstract class Session {
-        private Socket _socket;
-        private int disconnected = 0;
+        Socket _socket;
+        int _disconnected = 0;
 
         RecvBuffer _recvBuffer = new RecvBuffer(1024);
 
@@ -60,6 +60,13 @@ namespace ServerCore {
         public abstract int OnRecv(ArraySegment<byte> buffer);
         public abstract void OnSend(int numOfBytes);
         public abstract void OnDisconnected(EndPoint endPoint);
+
+        void Clear() {
+            lock (_lock) {
+                _sendQueue.Clear();
+                _pendingList.Clear();
+            }
+        }
 
         // 소켓을 인자로 받아 초기화 및 실행
         public void Start(Socket socket) {
@@ -85,7 +92,7 @@ namespace ServerCore {
 
         public void Disconnect() {
             // 멀티쓰레드 환경에서 여러번 호출될 수 있다.
-            if (Interlocked.Exchange(ref disconnected, 1) == 1) {
+            if (Interlocked.Exchange(ref _disconnected, 1) == 1) {
                 // 값이 1이라면 이미 변경된 것이므로 수행 중단
                 return;
             }
@@ -94,11 +101,16 @@ namespace ServerCore {
             OnDisconnected(_socket.RemoteEndPoint);
             _socket.Shutdown(SocketShutdown.Both);
             _socket.Close();
+            Clear();
         }
 
         #region 네트워크 통신
         // 보내는 시점이 정해져 있지 않음
         private void RegisterSend() {
+            if (_disconnected == 1) {
+                return;
+            }
+
             // RegisterSend 내부로 들어왔을 때는 _pendingList.Count가 0인 상태이다.
             while (_sendQueue.Count > 0) {
                 ArraySegment<byte> buff = _sendQueue.Dequeue();
@@ -110,10 +122,16 @@ namespace ServerCore {
 
             _sendArgs.BufferList = _pendingList;
 
-            bool pending = _socket.SendAsync(_sendArgs);
-            if (pending == false) {
-                OnSendCompleted(null, _sendArgs);
+            try {
+                bool pending = _socket.SendAsync(_sendArgs);
+                if (pending == false) {
+                    OnSendCompleted(null, _sendArgs);
+                }
             }
+            catch (Exception e) {
+                Console.WriteLine($"RegisterSend failed: {e}");
+            }
+            
         }
 
         private void OnSendCompleted(object sender, SocketAsyncEventArgs args) {
@@ -145,14 +163,23 @@ namespace ServerCore {
 
         // 리스너와 같은 방식
         private void RegisterRecv() {
+            if (_disconnected == 1) {
+                return;
+            }
+
             // Start에서 하던 버퍼 설정을 등록할때로 변경
             _recvBuffer.Clean();
             ArraySegment<byte> segment = _recvBuffer.WriteSegment;
             _recvArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
 
-            bool pending = _socket.ReceiveAsync(_recvArgs);
-            if (pending == false) {
-                OnRecvCompleted(null, _recvArgs);
+            try {
+                bool pending = _socket.ReceiveAsync(_recvArgs);
+                if (pending == false) {
+                    OnRecvCompleted(null, _recvArgs);
+                }
+            }
+            catch (Exception e) {
+                Console.WriteLine($"RegisterRecv failed: {e}");
             }
         }
 
