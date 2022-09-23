@@ -19,7 +19,9 @@ namespace Server {
             Console.WriteLine("listening..");
 
             while (true) {
-                ;
+                // 모은 패킷을 한번에 보내도록 함
+                Room.Push(() => Room.Flush());
+                Thread.Sleep(250);
             }
         }
     }

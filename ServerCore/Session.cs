@@ -10,6 +10,8 @@ namespace ServerCore {
         // 패킷의 size를 패킷 내에 넣어두면 나중에 확인하기 편함
         public sealed override int OnRecv(ArraySegment<byte> buffer) {
             int processLen = 0;
+            // 패킷 처리 갯수 추적
+            int packetCount = 0;
 
             while (true) {
                 // 예시 패킷은 ushort 2개로 이루어짐
@@ -31,10 +33,15 @@ namespace ServerCore {
                 // ArraySegment는 class가 아니라 struct이기에 new를 붙인다고 해도
                 // heap에 할당되는 것이 아니라 stack에 복사될 뿐이기에 부담이 없다.
                 OnRecvPacket(new ArraySegment<byte>(buffer.Array, buffer.Offset, dataSize));
+                packetCount++;
 
                 processLen += dataSize;
                 // 처리한 부분을 뺀 다음(남은) 부분
                 buffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + dataSize, buffer.Count - dataSize);
+            }
+
+            if (packetCount > 1) {
+                Console.WriteLine($"패킷 모아 보내기: {packetCount}");
             }
 
             return processLen;
@@ -47,7 +54,7 @@ namespace ServerCore {
         Socket _socket;
         int _disconnected = 0;
 
-        RecvBuffer _recvBuffer = new RecvBuffer(1024);
+        RecvBuffer _recvBuffer = new RecvBuffer(65535);
 
         // 전송하는 것을 큐로 저장
         object _lock = new object();
@@ -77,6 +84,22 @@ namespace ServerCore {
             _sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnSendCompleted);
 
             RegisterRecv();
+        }
+
+        // 모아 보내기
+        public void Send(List<ArraySegment<byte>> sendBuffList) {
+            if (sendBuffList.Count == 0) {
+                return;
+            }
+
+            lock (_lock) {
+                foreach (ArraySegment<byte> sendBuff in sendBuffList) {
+                    _sendQueue.Enqueue(sendBuff);
+                }
+                if (_pendingList.Count == 0) {
+                    RegisterSend();
+                }
+            }
         }
 
         // 보내기

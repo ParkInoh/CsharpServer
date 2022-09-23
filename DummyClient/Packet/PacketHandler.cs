@@ -8,7 +8,7 @@ class PacketHandler {
 
         // 너무 많으면 보기 힘드니 1번만 출력하도록 함
         //if (chatPacket.playerId == 1) {
-            Console.WriteLine(chatPacket.chat);
+        //    Console.WriteLine(chatPacket.chat);
         //}
     }
 }

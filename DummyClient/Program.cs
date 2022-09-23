@@ -14,7 +14,7 @@ namespace DummyClient {
 
             // 커넥터를 사용하도록 연결 변경
             Connecter connecter = new();
-            connecter.Connect(endPoint, () => { return SessionManager.Instance.Generate(); }, 100);
+            connecter.Connect(endPoint, () => { return SessionManager.Instance.Generate(); }, 500);
 
             while (true) {
                 try {
