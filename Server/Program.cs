@@ -2,11 +2,15 @@
 using System.Net;
 
 namespace Server {
-    
-
     internal class Program {
         static Listener _listener = new();
         public static GameRoom Room = new();
+
+        static void FlushRoom() {
+            Room.Push(() => Room.Flush());
+            // 다음 호출을 예약함
+            JobTimer.Instance.Push(FlushRoom, 250);
+        }
 
         static void Main(string[] args) {
             string host = Dns.GetHostName();
@@ -18,10 +22,11 @@ namespace Server {
             _listener.Init(endPoint, () => { return SessionManager.Instance.Generate(); });
             Console.WriteLine("listening..");
 
+            // JobTimer가 관리하도록 함
+            JobTimer.Instance.Push(FlushRoom);
+
             while (true) {
-                // 모은 패킷을 한번에 보내도록 함
-                Room.Push(() => Room.Flush());
-                Thread.Sleep(250);
+                JobTimer.Instance.Flush();
             }
         }
     }
