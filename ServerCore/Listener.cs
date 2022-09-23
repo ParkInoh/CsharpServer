@@ -8,7 +8,7 @@ namespace ServerCore {
         // 그래서 Func로 어떤 Session을 만들 것인지를 인자로 받는다.
         private Func<Session> _sessionFactory;
 
-        public void Init(IPEndPoint endPoint, Func<Session> sessionFactory) {
+        public void Init(IPEndPoint endPoint, Func<Session> sessionFactory, int register = 10, int backlog = 100) {
             // 소켓 생성
             _listenSocket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             _sessionFactory += sessionFactory;
@@ -17,14 +17,16 @@ namespace ServerCore {
             _listenSocket.Bind(endPoint);
             // 소켓을 listen 상태로 만듦.
             // backlog: 접속 가능한 최대 연결 수
-            _listenSocket.Listen(10);
+            _listenSocket.Listen(backlog);
 
             // 이벤트를 발생시켜 알려준다.
-            SocketAsyncEventArgs args = new SocketAsyncEventArgs();
             // 델리게이트를 추가한다.
             // RegisterAccept에서 pending이 true라면 콜백으로 호출한다.
-            args.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
-            RegisterAccept(args);
+            for (int i = 0; i < register; i++) {
+                SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+                args.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
+                RegisterAccept(args);
+            }
         }
 
         // 소켓 연결(비동기)

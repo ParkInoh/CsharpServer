@@ -8,7 +8,8 @@ namespace Server {
 
         public override void OnConnected(EndPoint endPoint) {
             Console.WriteLine($"OnConnected: {endPoint}");
-            Program.Room.Enter(this);
+            // Action 형식으로 변경
+            Program.Room.Push(() => Program.Room.Enter(this));
         }
 
         // PacketManager를 호출하는 형식으로 변경
@@ -21,7 +22,10 @@ namespace Server {
             SessionManager.Instance.Remove(this);
             // 방에서 나감
             if (Room != null) {
-                Room.Leave(this);
+                // Action 형식으로 변경
+                // Action이기에 null을 참조할 수 있기에 참조자를 바꿈
+                GameRoom room = Room;
+                room.Push(() => room.Leave(this));
                 Room = null;
             }
             Console.WriteLine($"OnDisconnected: {endPoint}");
