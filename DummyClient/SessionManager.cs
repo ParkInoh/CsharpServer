@@ -5,15 +5,17 @@
 
         List<ServerSession> _sessions = new();
         object _lock = new();
+        private Random _rand = new();
 
         public void SendForEach() {
             lock (_lock) {
                 foreach (ServerSession session in _sessions) {
-                    C_Chat chatPacket = new();
-                    chatPacket.chat = $"Hello Server!";
-                    ArraySegment<byte> seg = chatPacket.Write();
-
-                    session.Send(seg);
+                    C_Move movePacket = new() {
+                        posX = _rand.Next(-50, 50),
+                        posY = 0,
+                        posZ = _rand.Next(-50, 50)
+                    };
+                    session.Send(movePacket.Write());
                 }
             }
         }

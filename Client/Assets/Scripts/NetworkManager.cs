@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Net;
 using DummyClient;
 using ServerCore;
@@ -19,10 +21,26 @@ public class NetworkManager : MonoBehaviour {
         Connector connector = new Connector();
         connector.Connect(endPoint, () => _session);
 
+        StartCoroutine(nameof(SendPacketCo));
     }
 
-    // Update is called once per frame
     void Update() {
-        
+        // 패킷을 메인 쓰레드에서 큐애 넣어 처리하도록 변경
+        IPacket packet = PacketQueue.Instance.Pop();
+        if (packet != null) {
+            PacketManager.Instance.HandlePacket(_session, packet);
+        }
+    }
+
+    IEnumerator SendPacketCo() {
+        while (true) {
+            yield return new WaitForSeconds(3f);
+
+            C_Chat chatPacket = new C_Chat();
+            chatPacket.chat = "Hello Unity";
+            ArraySegment<byte> segment = chatPacket.Write();
+            
+            _session.Send(segment);
+        }
     }
 }

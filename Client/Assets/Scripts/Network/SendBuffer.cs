@@ -19,7 +19,7 @@ namespace ServerCore {
         // ThreadLocal은 전역이지만 자신의 쓰레드에서만 접근한다(안전).
         public static ThreadLocal<SendBuffer> CurrentBuffer = new ThreadLocal<SendBuffer>(() => { return null; });
 
-        public static int ChunkSize { get; set; } = 65535 * 100;
+        public static int ChunkSize { get; set; } = 65535;
 
         // ThreadLocal의 버퍼를 관리
         public static ArraySegment<byte> Open(int reserveSize) {
