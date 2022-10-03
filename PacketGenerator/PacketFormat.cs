@@ -1,14 +1,14 @@
 ﻿namespace PacketGenerator {
     internal class PacketFormat {
         // {0}: 패킷 등록
-        public static string manangerFormat =
+        public static string managerFormat =
 @"using ServerCore;
 using System;
 using System.Collections.Generic;
 
 public class PacketManager {{
     #region Singleton
-    static PacketManager _instance = new PacketManager();
+    static PacketManager _instance = new();
     public static PacketManager Instance {{ get {{ return _instance; }} }}
     #endregion
 
@@ -16,10 +16,8 @@ public class PacketManager {{
         Register();
     }}
     
-    Dictionary<ushort, Func<PacketSession, ArraySegment<byte>, IPacket>> _makeFunc =
-        new Dictionary<ushort, Func<PacketSession, ArraySegment<byte>, IPacket>>();
-    Dictionary<ushort, Action<PacketSession, IPacket>> _handler =
-        new Dictionary<ushort, Action<PacketSession, IPacket>>();
+    Dictionary<ushort, Func<PacketSession, ArraySegment<byte>, IPacket>> _makeFunc = new();
+    Dictionary<ushort, Action<PacketSession, IPacket>> _handler = new();
 
     public void Register() {{
 {0}
@@ -46,7 +44,7 @@ public class PacketManager {{
     }}
 
     T MakePacket<T>(PacketSession session, ArraySegment<byte> buffer) where T : IPacket, new() {{
-        T packet = new T();
+        T packet = new();
         packet.Read(buffer);
         return packet;
     }}
@@ -71,6 +69,7 @@ public class PacketManager {{
         public static string fileFormat =
 @"using ServerCore;
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 public enum PacketID {{
@@ -154,7 +153,7 @@ public interface IPacket {{
     }}
 }}
 
-public List<{0}> {1}s = new List<{0}>();";
+public List<{0}> {1}s = new();";
 
         // {0}: 변수명
         // {1}: BitConverter.To~~ 형식
@@ -184,7 +183,7 @@ ushort {1}Length = BitConverter.ToUInt16(seg.Array, seg.Offset + count);
 count += sizeof(ushort);
 
 for (int i = 0; i < {1}Length; i++) {{
-    {0} {1} = new {0}();
+    {0} {1} = new();
     {1}.Read(seg, ref count);
     {1}s.Add({1});
 }}";

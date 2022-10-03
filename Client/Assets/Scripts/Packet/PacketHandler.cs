@@ -3,21 +3,32 @@ using ServerCore;
 using UnityEngine;
 
 class PacketHandler {
-    public static void S_ChatHandler(PacketSession session, IPacket packet) {
-        S_Chat chatPacket = packet as S_Chat;
+    public static void S_BroadcastEnterGameHandler(PacketSession session, IPacket packet) {
+        S_BroadcastEnterGame pkt = packet as S_BroadcastEnterGame;
         ServerSession serverSession = session as ServerSession;
-
-        //if (chatPacket.playerId == 1) {
-            Debug.Log(chatPacket.chat);
-            
-            // 메인 쓰레드에서 동작해야 함
-            GameObject gameObject = GameObject.Find("Player");
-            if (gameObject == null) {
-                Debug.Log("Player not found.");
-            }
-            else {
-                Debug.Log("Player found.");
-            }
-        //}
+        
+        PlayerManager.Instance.EnterGame(pkt);
+    }
+    
+    public static void S_BroadcastLeaveGameHandler(PacketSession session, IPacket packet) {
+        S_BroadcastLeaveGame pkt = packet as S_BroadcastLeaveGame;
+        ServerSession serverSession = session as ServerSession;
+        
+        PlayerManager.Instance.LeaveGame(pkt);
+    }
+    
+    public static void S_BroadcastMoveHandler(PacketSession session, IPacket packet) {
+        S_BroadcastMove pkt = packet as S_BroadcastMove;
+        ServerSession serverSession = session as ServerSession;
+        
+        PlayerManager.Instance.Move(pkt);
+    }
+    
+    public static void S_PlayerListHandler(PacketSession session, IPacket packet) {
+        S_PlayerList pkt = packet as S_PlayerList;
+        ServerSession serverSession = session as ServerSession;
+        
+        // 패킷 전달하면 매니저가 파싱해서 플레이어 만듦
+        PlayerManager.Instance.Add(pkt);
     }
 }

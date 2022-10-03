@@ -19,14 +19,10 @@ namespace ServerCore {
         public int FreeSize { get { return _buffer.Count - _writePos; } }
 
         // 데이터 범위를 ArraySegment로 반환
-        public ArraySegment<byte> ReadSegment {
-            get { return new ArraySegment<byte>(_buffer.Array, _buffer.Offset + _readPos, DataSize); }
-        }
+        public ArraySegment<byte> ReadSegment => new(_buffer.Array, _buffer.Offset + _readPos, DataSize);
 
         // 데이터를 받을 때 쓸 범위를 반환
-        public ArraySegment<byte> WriteSegment {
-            get { return new ArraySegment<byte>(_buffer.Array, _buffer.Offset + _writePos, FreeSize); }
-        }
+        public ArraySegment<byte> WriteSegment => new(_buffer.Array, _buffer.Offset + _writePos, FreeSize);
 
         // readPos, writePos를 주기적으로 초기화함
         public void Clean() {

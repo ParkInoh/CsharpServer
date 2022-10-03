@@ -17,7 +17,7 @@ namespace ServerCore {
     public class SendBufferHelper {
         // 쓰레드 간의 race condition을 방지하기 위해 ThreadLocal을 사용한다.
         // ThreadLocal은 전역이지만 자신의 쓰레드에서만 접근한다(안전).
-        public static ThreadLocal<SendBuffer> CurrentBuffer = new ThreadLocal<SendBuffer>(() => { return null; });
+        public static ThreadLocal<SendBuffer> CurrentBuffer = new(() => null);
 
         public static int ChunkSize { get; set; } = 65535;
 

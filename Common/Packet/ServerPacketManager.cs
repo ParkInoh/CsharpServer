@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class PacketManager {
     #region Singleton
-    static PacketManager _instance = new PacketManager();
+    static PacketManager _instance = new();
     public static PacketManager Instance { get { return _instance; } }
     #endregion
 
@@ -12,10 +12,8 @@ public class PacketManager {
         Register();
     }
     
-    Dictionary<ushort, Func<PacketSession, ArraySegment<byte>, IPacket>> _makeFunc =
-        new Dictionary<ushort, Func<PacketSession, ArraySegment<byte>, IPacket>>();
-    Dictionary<ushort, Action<PacketSession, IPacket>> _handler =
-        new Dictionary<ushort, Action<PacketSession, IPacket>>();
+    Dictionary<ushort, Func<PacketSession, ArraySegment<byte>, IPacket>> _makeFunc = new();
+    Dictionary<ushort, Action<PacketSession, IPacket>> _handler = new();
 
     public void Register() {
         _makeFunc.Add((ushort)PacketID.C_LeaveGame, MakePacket<C_LeaveGame>);
@@ -46,7 +44,7 @@ public class PacketManager {
     }
 
     T MakePacket<T>(PacketSession session, ArraySegment<byte> buffer) where T : IPacket, new() {
-        T packet = new T();
+        T packet = new();
         packet.Read(buffer);
         return packet;
     }

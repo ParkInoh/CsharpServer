@@ -1,5 +1,6 @@
 using ServerCore;
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 public enum PacketID {
@@ -164,7 +165,7 @@ public class S_PlayerList : IPacket {
 	    }
 	}
 	
-	public List<Player> players = new List<Player>();
+	public List<Player> players = new();
 
     public ushort Protocol {
 		get { return (ushort)PacketID.S_PlayerList; }
@@ -181,7 +182,7 @@ public class S_PlayerList : IPacket {
 		count += sizeof(ushort);
 		
 		for (int i = 0; i < playerLength; i++) {
-		    Player player = new Player();
+		    Player player = new();
 		    player.Read(seg, ref count);
 		    players.Add(player);
 		}

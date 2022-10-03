@@ -23,7 +23,7 @@ class PacketHandler {
             return;
         }
 
-        Console.WriteLine($"{movePacket.posX}, {movePacket.posY}, {movePacket.posZ}");
+        //Console.WriteLine($"{movePacket.posX}, {movePacket.posY}, {movePacket.posZ}");
 
         // Action 형식으로 변경
         // Action이기에 null을 참조할 수 있기에 참조자를 바꿈

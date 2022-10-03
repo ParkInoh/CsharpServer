@@ -61,10 +61,10 @@ namespace ServerCore {
 
         // 전송하는 것을 큐로 저장
         object _lock = new object();
-        Queue<ArraySegment<byte>> _sendQueue = new Queue<ArraySegment<byte>>();
-        SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
-        SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
-        List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
+        Queue<ArraySegment<byte>> _sendQueue = new();
+        SocketAsyncEventArgs _sendArgs = new();
+        SocketAsyncEventArgs _recvArgs = new();
+        List<ArraySegment<byte>> _pendingList = new();
 
         public abstract void OnConnected(EndPoint endPoint);
         public abstract int OnRecv(ArraySegment<byte> buffer);
@@ -83,8 +83,8 @@ namespace ServerCore {
             _socket = socket;
 
             // 이벤트 핸들러 델리게이트를 추가함
-            _recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
-            _sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnSendCompleted);
+            _recvArgs.Completed += OnRecvCompleted;
+            _sendArgs.Completed += OnSendCompleted;
 
             RegisterRecv();
         }

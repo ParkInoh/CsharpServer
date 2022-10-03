@@ -17,7 +17,7 @@ namespace ServerCore {
                 Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 _sessionFactory = sessionFactory;
 
-                SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+                SocketAsyncEventArgs args = new();
                 args.Completed += OnConnectCompleted;
                 args.RemoteEndPoint = endPoint;
 

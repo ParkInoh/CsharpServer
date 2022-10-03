@@ -49,9 +49,9 @@ namespace PacketGenerator {
                 File.WriteAllText("GenPackets.cs", fileText);
 
                 // {0}: 패킷 등록 / 클라이언트, 서버 분리
-                string clientManagerText = string.Format(PacketFormat.manangerFormat, clientRegister);
+                string clientManagerText = string.Format(PacketFormat.managerFormat, clientRegister);
                 File.WriteAllText("ClientPacketManager.cs", clientManagerText);
-                string serverManagerText = string.Format(PacketFormat.manangerFormat, serverRegister);
+                string serverManagerText = string.Format(PacketFormat.managerFormat, serverRegister);
                 File.WriteAllText("ServerPacketManager.cs", serverManagerText);
             }
         }
